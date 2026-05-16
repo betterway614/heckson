@@ -6,9 +6,11 @@ settings = get_settings()
 
 engine = create_async_engine(
     settings.database_url,
-    echo=True,
-    pool_size=20,
+    echo=False,  # 生产环境关闭SQL日志
+    pool_size=5,
     max_overflow=10,
+    pool_timeout=30,
+    pool_recycle=1800,  # 30分钟回收连接
 )
 
 async_session = async_sessionmaker(

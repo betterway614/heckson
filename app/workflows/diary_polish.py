@@ -128,6 +128,8 @@ class DiaryPolishWorkflow(BaseWorkflow):
             if vr.get("details"):
                 detail_str = vr["details"] if isinstance(vr["details"], str) else ", ".join(vr["details"])
                 parts.append(f"细节: {detail_str}")
+            if vr.get("text_in_image"):
+                parts.append(f"图中文字: {vr['text_in_image']}")
             if parts:
                 visual_descriptions.append("; ".join(parts))
 

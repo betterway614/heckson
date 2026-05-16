@@ -44,14 +44,14 @@ class VLMService:
         if user_text:
             prompt = prompt.replace("{user_text}", user_text)
 
-        # 调用VLM多模态模型
+        # 调用VLM多模态模型（dashscope支持本地文件路径，不带file://前缀）
         response = MultiModalConversation.call(
             model=model_name,
             messages=[
                 {
                     "role": "user",
                     "content": [
-                        {"image": f"file://{image_path}"},
+                        {"image": image_path},
                         {"text": prompt}
                     ]
                 }

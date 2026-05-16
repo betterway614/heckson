@@ -464,16 +464,23 @@ watch(() => route.query.date, (newDate) => {
   position: relative;
 }
 
+.day-cell.has-data:not(.is-selected) {
+  font-weight: 600;
+  background: rgba(255, 152, 0, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 152, 0, 0.45);
+}
+
 .day-cell.has-data::after {
   content: '';
   position: absolute;
-  bottom: 2px;
+  bottom: 3px;
   left: 50%;
   transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background-color: #ff9800;
+  background-color: #ff6d00;
+  box-shadow: 0 0 0 2px rgba(255, 109, 0, 0.22);
 }
 
 .day-cell.is-selected {
@@ -484,6 +491,7 @@ watch(() => route.query.date, (newDate) => {
 
 .day-cell.is-selected.has-data::after {
   background-color: white;
+  box-shadow: none;
 }
 
 .section-header {

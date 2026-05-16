@@ -15,11 +15,11 @@ class Generation(Base):
     memory_ids = Column(JSONB, nullable=False)
     type = Column(String(16), nullable=False)  # diary/comic
     style_key = Column(String(32), nullable=False)
-    status = Column(String(32), default="pending")  # pending/processing/pending_confirmation/done/failed
+    status = Column(String(32), default="pending", index=True)  # pending/processing/pending_confirmation/done/failed
     progress = Column(Integer, default=0)
     current_step = Column(String(32))
     error_message = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     completed_at = Column(DateTime)
 
     # 两阶段工作流字段

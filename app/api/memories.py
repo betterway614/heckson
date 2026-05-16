@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from uuid import UUID
-from typing import Optional
+from typing import Optional, List
 from datetime import date
 
 from app.database import get_db
@@ -118,3 +118,36 @@ async def get_memory_media(
             "url": f"/uploads/{relative_path}"
         })
     return response_list
+
+
+@router.post("/batch-media")
+async def batch_get_memory_media(
+    memory_ids: List[UUID],
+    db: AsyncSession = Depends(get_db)
+):
+    """批量获取多个记忆的媒体文件 - 解决N+1查询问题"""
+    settings = get_settings()
+    stmt = select(Media).where(Media.memory_id.in_(memory_ids)).order_by(Media.sort_order)
+    result = await db.execute(stmt)
+    media_list = result.scalars().all()
+
+    # 按 memory_id 分组
+    grouped_media = {}
+    for media in media_list:
+        relative_path = normalize_file_path(media.file_path, settings.upload_dir)
+        media_data = {
+            "id": media.id,
+            "memory_id": media.memory_id,
+            "file_path": relative_path,
+            "file_type": media.file_type,
+            "original_filename": media.original_filename,
+            "taken_at": media.taken_at,
+            "sort_order": media.sort_order,
+            "created_at": media.created_at,
+            "url": f"/uploads/{relative_path}"
+        }
+        if media.memory_id not in grouped_media:
+            grouped_media[media.memory_id] = []
+        grouped_media[media.memory_id].append(media_data)
+
+    return grouped_media

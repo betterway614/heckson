@@ -480,7 +480,7 @@ async def stream_generation_progress(
     from datetime import datetime, timedelta
 
     MAX_POLL_SECONDS = 600      # 最大轮询时间：10分钟
-    INITIAL_INTERVAL = 1        # 初始轮询间隔：1秒
+    INITIAL_INTERVAL = 2        # 初始轮询间隔：2秒（避免过于频繁）
     MAX_INTERVAL = 10           # 最大轮询间隔：10秒
     STALE_THRESHOLD_MINUTES = 5 # 任务卡住阈值：5分钟无更新
 
@@ -547,10 +547,10 @@ async def stream_generation_progress(
                     yield f"event: complete\ndata: {json_data}\n\n"
                     break
 
-            # 指数退避：每10次轮询后增加间隔
+            # 指数退避：每5次轮询后增加间隔，更平滑的退避
             poll_count += 1
-            if poll_count % 10 == 0 and interval < MAX_INTERVAL:
-                interval = min(interval * 2, MAX_INTERVAL)
+            if poll_count % 5 == 0 and interval < MAX_INTERVAL:
+                interval = min(interval * 1.5, MAX_INTERVAL)
 
             await asyncio.sleep(interval)
 

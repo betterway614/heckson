@@ -13,10 +13,10 @@ class Memory(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     content_text = Column(Text)
-    memory_date = Column(Date, nullable=False)
+    memory_date = Column(Date, nullable=False, index=True)
     mood_tag = Column(String(32))
     metadata_json = Column(JSONB)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     user = relationship("User", back_populates="memories")
     media = relationship("Media", back_populates="memory")
