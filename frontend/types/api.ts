@@ -107,8 +107,12 @@ export interface MediaResponse {
   file_path: string;
   file_type: string;
   original_filename?: string;
+  taken_at?: ISO8601DateTime;
+  sort_order?: number;
   created_at: ISO8601DateTime;
 }
+
+export type MemoryMediaList = MediaResponse[];
 
 /**
  * 支持的媒体文件类型
@@ -197,6 +201,44 @@ export interface PromptConfirm {
   final_prompt: string;
 }
 
+/**
+ * 日记润色请求
+ */
+export interface DiaryPolish {
+  diary_text: string;
+  style_key: string;
+}
+
+/**
+ * 日记润色响应
+ */
+export interface DiaryPolishResponse {
+  original_text: string;
+  polished_text: string;
+  style_key: string;
+  style_name: string;
+}
+
+/**
+ * 情绪提取请求
+ */
+export interface EmotionExtract {
+  diary_text: string;
+}
+
+/**
+ * 情绪提取响应
+ */
+export interface EmotionResult {
+  primary_emotion?: string;
+  intensity?: number;
+  secondary_emotion?: string;
+  bgm_vibe?: string;
+  color_palette?: string;
+  weather_mood?: string;
+  [key: string]: any;
+}
+
 // ==================== 模板相关 ====================
 
 /**
@@ -256,6 +298,9 @@ export interface ApiError {
 export interface PaginationParams {
   skip?: number;
   limit?: number;
+  date?: ISO8601Date;
+  start_date?: ISO8601Date;
+  end_date?: ISO8601Date;
 }
 
 // ==================== API客户端类型 ====================
@@ -268,6 +313,7 @@ export interface YouTimeApiClient {
   createMemory(data: MemoryCreate): Promise<MemoryResponse>;
   listMemories(params?: PaginationParams): Promise<MemoryList>;
   getMemory(memoryId: UUID): Promise<MemoryResponse>;
+  getMemoryMedia(memoryId: UUID): Promise<MemoryMediaList>;
 
   // 媒体相关
   uploadMedia(memoryId: UUID, file: File): Promise<MediaResponse>;
@@ -275,13 +321,17 @@ export interface YouTimeApiClient {
 
   // 生成任务相关
   createGeneration(data: GenerationCreate): Promise<GenerationResponse>;
+  listGenerations(params?: PaginationParams): Promise<GenerationResponse[]>;
   getGeneration(generationId: UUID): Promise<GenerationResponse>;
   updatePrompt(generationId: UUID, data: PromptUpdate): Promise<GenerationResponse>;
   polishPrompt(generationId: UUID, data: PromptPolish): Promise<GenerationResponse>;
   confirmPrompt(generationId: UUID, data: PromptConfirm): Promise<GenerationResponse>;
+  polishDiary(generationId: UUID, data: DiaryPolish): Promise<DiaryPolishResponse>;
+  extractEmotion(generationId: UUID, data: EmotionExtract): Promise<EmotionResult>;
   streamGenerationProgress(generationId: UUID): EventSource;
 
   // 模板相关
   listStyles(): Promise<Style[]>;
   getStyle(styleKey: string): Promise<Style>;
+  listPolishStyles(): Promise<Style[]>;
 }

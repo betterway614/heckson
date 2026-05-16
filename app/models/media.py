@@ -1,17 +1,17 @@
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
 from app.database import Base
+from app.db_types import GUID
 
 
 class Media(Base):
     __tablename__ = "media"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    memory_id = Column(UUID(as_uuid=True), ForeignKey("memories.id"), nullable=False, index=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    memory_id = Column(GUID(), ForeignKey("memories.id"), nullable=False, index=True)
     file_path = Column(String(512), nullable=False)
     file_type = Column(String(16), nullable=False)  # image/audio
     original_filename = Column(String(256))

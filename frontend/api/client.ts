@@ -9,12 +9,17 @@ import type {
   MemoryCreate,
   MemoryResponse,
   MemoryList,
+  MemoryMediaList,
   MediaResponse,
   GenerationCreate,
   GenerationResponse,
   PromptUpdate,
   PromptPolish,
   PromptConfirm,
+  DiaryPolish,
+  DiaryPolishResponse,
+  EmotionExtract,
+  EmotionResult,
   Style,
   PaginationParams,
   SSEProgressData,
@@ -35,7 +40,7 @@ export interface YouTimeApiConfig {
  * 默认配置
  */
 const DEFAULT_CONFIG: YouTimeApiConfig = {
-  baseUrl: 'http://localhost:8000',
+  baseUrl: (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8000',
   timeout: 30000,
 };
 
@@ -139,6 +144,13 @@ export class YouTimeApi implements YouTimeApiClient {
     return this.request<MemoryResponse>('GET', `/api/memories/${memoryId}`);
   }
 
+  /**
+   * 获取记忆关联媒体
+   */
+  async getMemoryMedia(memoryId: UUID): Promise<MemoryMediaList> {
+    return this.request<MemoryMediaList>('GET', `/api/memories/${memoryId}/media`);
+  }
+
   // ==================== 媒体相关 ====================
 
   /**
@@ -169,6 +181,15 @@ export class YouTimeApi implements YouTimeApiClient {
   async createGeneration(data: GenerationCreate): Promise<GenerationResponse> {
     return this.request<GenerationResponse>('POST', '/api/generations/', {
       body: data,
+    });
+  }
+
+  /**
+   * 获取生成任务列表
+   */
+  async listGenerations(params?: PaginationParams): Promise<GenerationResponse[]> {
+    return this.request<GenerationResponse[]>('GET', '/api/generations/', {
+      params,
     });
   }
 
@@ -207,6 +228,24 @@ export class YouTimeApi implements YouTimeApiClient {
   }
 
   /**
+   * 日记文本润色
+   */
+  async polishDiary(generationId: UUID, data: DiaryPolish): Promise<DiaryPolishResponse> {
+    return this.request<DiaryPolishResponse>('POST', `/api/generations/${generationId}/polish-diary`, {
+      body: data,
+    });
+  }
+
+  /**
+   * 提取情绪标签
+   */
+  async extractEmotion(generationId: UUID, data: EmotionExtract): Promise<EmotionResult> {
+    return this.request<EmotionResult>('POST', `/api/generations/${generationId}/extract-emotion`, {
+      body: data,
+    });
+  }
+
+  /**
    * 监听生成进度 (SSE)
    */
   streamGenerationProgress(generationId: UUID): EventSource {
@@ -228,6 +267,13 @@ export class YouTimeApi implements YouTimeApiClient {
    */
   async getStyle(styleKey: string): Promise<Style> {
     return this.request<Style>('GET', `/api/templates/styles/${styleKey}`);
+  }
+
+  /**
+   * 获取日记润色风格列表
+   */
+  async listPolishStyles(): Promise<Style[]> {
+    return this.request<Style[]>('GET', '/api/generations/polish-styles');
   }
 }
 

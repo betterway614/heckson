@@ -1,11 +1,15 @@
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException
+import json
+from datetime import date
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import func, select
 from uuid import UUID
 
-from app.database import get_db
+from app.database import async_session, get_db
 from app.models.generation import Generation
 from app.schemas.generation import (
     GenerationCreate, GenerationResponse, GenerationProgress,
@@ -27,6 +31,25 @@ style_manager = StyleManager()
 async def list_polish_styles():
     """获取所有日记润色风格列表"""
     return style_manager.list_polish_styles()
+
+
+@router.get("/", response_model=list[GenerationResponse])
+async def list_generations(
+    skip: int = 0,
+    limit: int = 20,
+    date: Optional[date] = Query(None, description="按创建日期筛选"),
+    db: AsyncSession = Depends(get_db)
+):
+    """获取生成任务列表，支持按创建日期筛选"""
+    user_id = "00000000-0000-0000-0000-000000000001"
+
+    stmt = select(Generation).where(Generation.user_id == user_id)
+    if date:
+        stmt = stmt.where(func.date(Generation.created_at) == date)
+
+    stmt = stmt.order_by(Generation.created_at.desc()).offset(skip).limit(limit)
+    result = await db.execute(stmt)
+    return result.scalars().all()
 
 
 @router.post("/", response_model=GenerationResponse)
@@ -54,16 +77,22 @@ async def create_generation(
     await db.refresh(generation)
 
     # 异步启动阶段1：VLM解析
-    asyncio.create_task(_run_vlm_workflow(db, generation))
+    asyncio.create_task(_run_vlm_workflow(generation.id))
 
     return generation
 
 
-async def _run_vlm_workflow(db: AsyncSession, generation: Generation):
+async def _run_vlm_workflow(generation_id: UUID):
     """运行阶段1：VLM解析"""
     try:
-        workflow = VLMWorkflow(db, generation)
-        await workflow.run()
+        async with async_session() as db:
+            stmt = select(Generation).where(Generation.id == generation_id)
+            result = await db.execute(stmt)
+            generation = result.scalar_one_or_none()
+            if not generation:
+                return
+            workflow = VLMWorkflow(db, generation)
+            await workflow.run()
     except Exception as e:
         print(f"VLM workflow failed: {e}")
 
@@ -180,17 +209,23 @@ async def confirm_prompt(
     await db.commit()
 
     # 异步启动阶段2：图片生成
-    asyncio.create_task(_run_img_gen_workflow(db, generation))
+    asyncio.create_task(_run_img_gen_workflow(generation.id))
 
     await db.refresh(generation)
     return generation
 
 
-async def _run_img_gen_workflow(db: AsyncSession, generation: Generation):
+async def _run_img_gen_workflow(generation_id: UUID):
     """运行阶段2：图片生成"""
     try:
-        workflow = ImageGenWorkflow(db, generation)
-        await workflow.run()
+        async with async_session() as db:
+            stmt = select(Generation).where(Generation.id == generation_id)
+            result = await db.execute(stmt)
+            generation = result.scalar_one_or_none()
+            if not generation:
+                return
+            workflow = ImageGenWorkflow(db, generation)
+            await workflow.run()
     except Exception as e:
         print(f"Image generation workflow failed: {e}")
 
@@ -223,11 +258,11 @@ async def stream_generation_progress(
                 "llm_polished_prompt": generation.llm_polished_prompt,
                 "final_prompt": generation.final_prompt
             }
-            yield f"event: progress\ndata: {progress_data}\n\n"
+            yield f"event: progress\ndata: {json.dumps(progress_data, default=str, ensure_ascii=False)}\n\n"
 
             # 如果完成或失败，结束
             if generation.status in ["done", "failed", "pending_confirmation"]:
-                yield f"event: complete\ndata: {progress_data}\n\n"
+                yield f"event: complete\ndata: {json.dumps(progress_data, default=str, ensure_ascii=False)}\n\n"
                 break
 
             await asyncio.sleep(1)
