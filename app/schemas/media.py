@@ -10,6 +10,8 @@ class MediaResponse(BaseModel):
     file_path: str
     file_type: str
     original_filename: Optional[str] = None
+    taken_at: Optional[datetime] = None
+    sort_order: int = 0
     created_at: datetime
 
     class Config:

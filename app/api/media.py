@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from uuid import UUID
 
 from app.database import get_db
@@ -23,15 +23,24 @@ async def upload_media(
     if file.content_type not in allowed_types:
         raise HTTPException(status_code=400, detail="File type not allowed")
 
-    # 保存文件
-    file_path, original_filename = await save_upload_file(file, "images")
+    # 保存文件并提取 EXIF 时间
+    file_path, original_filename, taken_at = await save_upload_file(file, "images")
+
+    # 计算 sort_order (倒序: 0=最新, 1=次新, ...)
+    # 查询当前 memory 下已有多少张图片
+    stmt = select(func.count()).where(Media.memory_id == memory_id)
+    result = await db.execute(stmt)
+    count = result.scalar() or 0
+    sort_order = count  # 新上传的排在最后 (倒序时排最前)
 
     # 创建记录
     media = Media(
         memory_id=memory_id,
         file_path=file_path,
         file_type="image",
-        original_filename=original_filename
+        original_filename=original_filename,
+        taken_at=taken_at,
+        sort_order=sort_order
     )
     db.add(media)
     await db.commit()

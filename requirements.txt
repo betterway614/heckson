@@ -11,8 +11,7 @@ asyncpg==0.30.0
 redis[hiredis]==5.2.1
 
 # AI SDKs
-volcenginesdkarkruntime>=1.0.0
-volcengine>=1.0.0
+dashscope>=1.20.0
 
 # Utilities
 python-dotenv==1.0.1

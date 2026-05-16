@@ -1,6 +1,6 @@
 from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, desc
 
 from app.models.generation import Generation
 from app.models.memory import Memory
@@ -15,9 +15,11 @@ from app.templates.styles import StyleManager
 
 class VLMWorkflow(BaseWorkflow):
     """
-    阶段1：VLM解析工作流
+    阶段1：VLM解析工作流（策略B：两步分离）
 
-    解析图片，提取元数据，完成后状态变为pending_confirmation
+    Step 1 - vlm_extract: 纯视觉提取（不带用户文本，逐图独立）
+    Step 2 - diary_generate: LLM汇总（VLM结果 + 用户文本 → 日记正文）
+    完成后状态变为 pending_confirmation
     """
 
     def __init__(self, db: AsyncSession, generation: Generation):
@@ -26,60 +28,98 @@ class VLMWorkflow(BaseWorkflow):
         self.style = self.style_manager.get_style(generation.style_key)
 
     def define_steps(self) -> list[str]:
-        return ["vlm_parse"]
+        return ["vlm_extract", "diary_generate"]
 
     async def execute_step(self, step: str) -> dict[str, Any]:
-        if step == "vlm_parse":
-            return await self._vlm_parse()
+        if step == "vlm_extract":
+            return await self._vlm_extract()
+        elif step == "diary_generate":
+            return await self._diary_generate()
         else:
             raise ValueError(f"Unknown step: {step}")
 
-    async def _vlm_parse(self) -> dict[str, Any]:
-        """VLM解析图片"""
-        # 获取关联的媒体文件
+    async def _get_user_text(self) -> str:
+        """获取用户文字内容"""
         memory_ids = self.generation.memory_ids
-        stmt = select(Media).where(Media.memory_id.in_(memory_ids))
+        stmt_mem = select(Memory).where(Memory.id.in_(memory_ids))
+        result_mem = await self.db.execute(stmt_mem)
+        memories = result_mem.scalars().all()
+        return " ".join([m.content_text or "" for m in memories]).strip()
+
+    async def _vlm_extract(self) -> dict[str, Any]:
+        """Step 1: 纯视觉提取 - VLM只看图，不带用户文本"""
+        memory_ids = self.generation.memory_ids
+        # 按 taken_at 排序（早→晚），没有时间的按 sort_order
+        stmt = (
+            select(Media)
+            .where(Media.memory_id.in_(memory_ids))
+            .order_by(Media.sort_order)
+        )
         result = await self.db.execute(stmt)
         media_files = result.scalars().all()
 
-        # 解析每张图片
-        all_metadata = []
-        for media in media_files:
+        # 使用纯视觉提取提示词（不含用户文本）
+        vlm_prompt = self.style_manager.get_vlm_visual_prompt()
+
+        # 逐图独立提取，附带时间元数据
+        visual_results = []
+        for idx, media in enumerate(media_files):
             if media.file_type == "image":
                 metadata = await vlm_service.parse_image(
                     media.file_path,
-                    self.style["vlm_prompt"]
+                    vlm_prompt
                 )
-                all_metadata.append(metadata)
+                # 附带时间元数据
+                metadata["_meta"] = {
+                    "index": idx,
+                    "taken_at": media.taken_at.isoformat() if media.taken_at else None,
+                    "sort_order": media.sort_order,
+                    "filename": media.original_filename
+                }
+                visual_results.append(metadata)
 
-        # 更新Memory的metadata_json
-        stmt = select(Memory).where(Memory.id.in_(memory_ids))
-        result = await self.db.execute(stmt)
-        memories = result.scalars().all()
-
-        for memory in memories:
-            memory.metadata_json = all_metadata
-
-        # 更新Generation的vlm_raw_metadata
-        self.generation.vlm_raw_metadata = all_metadata
-
+        # 暂存视觉提取结果
+        self.generation.vlm_raw_metadata = visual_results
         await self.db.commit()
 
-        return {"metadata": all_metadata}
+        return {"visual_results": visual_results}
+
+    async def _diary_generate(self) -> dict[str, Any]:
+        """Step 2: 日记汇总 - LLM融合VLM结果 + 用户文本"""
+        visual_results = self.generation.vlm_raw_metadata or []
+        user_text = await self._get_user_text()
+
+        # 调用LLM汇总生成日记正文
+        diary_text = await llm_service.aggregate_diary(
+            visual_results=visual_results,
+            user_text=user_text
+        )
+
+        # 存入 generation，供用户确认
+        self.generation.user_edited_prompt = diary_text
+        await self.db.commit()
+
+        return {"diary_text": diary_text, "user_text": user_text}
 
     async def run(self) -> dict[str, Any]:
         """运行VLM解析，完成后设置状态为pending_confirmation"""
         try:
             self.generation.status = "processing"
-            self.generation.stage = "vlm_parse"
+            self.generation.stage = "vlm_extract"
             await self.db.commit()
 
-            result = await self.execute_step("vlm_parse")
+            # Step 1: 纯视觉提取
+            await self.update_progress("vlm_extract", 30)
+            result = await self._vlm_extract()
 
-            # VLM解析完成，等待用户确认
+            # Step 2: 日记汇总
+            await self.update_progress("diary_generate", 70)
+            result = await self._diary_generate()
+
+            # 完成，等待用户确认
             self.generation.status = "pending_confirmation"
             self.generation.progress = 100
-            self.generation.current_step = "vlm_parse"
+            self.generation.current_step = "diary_generate"
             await self.db.commit()
 
             return result

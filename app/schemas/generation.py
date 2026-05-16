@@ -55,3 +55,36 @@ class PromptPolish(BaseModel):
 class PromptConfirm(BaseModel):
     """用户确认提示词"""
     final_prompt: str
+
+
+class DiaryPolish(BaseModel):
+    """日记润色请求"""
+    diary_text: str
+    style_key: str  # polished/douyin/xiaohongshu/moments
+
+
+class DiaryPolishResponse(BaseModel):
+    """日记润色响应"""
+    original_text: str
+    polished_text: str
+    style_key: str
+    style_name: str
+
+
+class EmotionExtract(BaseModel):
+    """情绪提取请求"""
+    diary_text: str
+
+
+class ComicPromptGenerate(BaseModel):
+    """漫画分镜生成请求"""
+    diary_text: str
+    style_key: str  # comic_shuangwen/comic_zhiyu
+
+
+class ComicPromptResponse(BaseModel):
+    """漫画分镜响应"""
+    diary_text: str
+    comic_prompt: str
+    style_key: str
+    style_name: str

@@ -9,7 +9,10 @@ from app.database import get_db
 from app.models.generation import Generation
 from app.schemas.generation import (
     GenerationCreate, GenerationResponse, GenerationProgress,
-    PromptUpdate, PromptPolish, PromptConfirm
+    PromptUpdate, PromptPolish, PromptConfirm,
+    DiaryPolish, DiaryPolishResponse,
+    EmotionExtract,
+    ComicPromptGenerate, ComicPromptResponse
 )
 from app.workflows.diary import VLMWorkflow, ImageGenWorkflow
 from app.services.llm_service import llm_service
@@ -18,6 +21,12 @@ from app.templates.styles import StyleManager
 router = APIRouter(prefix="/api/generations", tags=["generations"])
 
 style_manager = StyleManager()
+
+
+@router.get("/polish-styles")
+async def list_polish_styles():
+    """获取所有日记润色风格列表"""
+    return style_manager.list_polish_styles()
 
 
 @router.post("/", response_model=GenerationResponse)
@@ -226,4 +235,134 @@ async def stream_generation_progress(
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream"
+    )
+
+
+# ========== 新增：日记润色 ==========
+
+@router.post("/{generation_id}/polish-diary", response_model=DiaryPolishResponse)
+async def polish_diary(
+    generation_id: UUID,
+    polish_data: DiaryPolish,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    日记润色 - 支持4种风格
+
+    - polished: 润色稿（文学性/私密手账）
+    - douyin: 抖音文案（强情绪/神反转）
+    - xiaohongshu: 小红书（种草/高颜值）
+    - moments: 朋友圈（克制/生活化）
+    """
+    stmt = select(Generation).where(Generation.id == generation_id)
+    result = await db.execute(stmt)
+    generation = result.scalar_one_or_none()
+
+    if not generation:
+        raise HTTPException(status_code=404, detail="Generation not found")
+
+    # 获取风格信息
+    from app.templates.styles import POLISH_STYLES
+    style_info = POLISH_STYLES.get(polish_data.style_key)
+    if not style_info:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid polish style: {polish_data.style_key}. "
+                   f"Available: {list(POLISH_STYLES.keys())}"
+        )
+
+    # 调用LLM润色
+    polished = await llm_service.polish_diary(
+        diary_text=polish_data.diary_text,
+        style_key=polish_data.style_key
+    )
+
+    # 保存润色结果到generation
+    generation.llm_polished_prompt = polished
+    await db.commit()
+
+    return DiaryPolishResponse(
+        original_text=polish_data.diary_text,
+        polished_text=polished,
+        style_key=polish_data.style_key,
+        style_name=style_info["name"]
+    )
+
+
+# ========== 新增：情绪提取 ==========
+
+@router.post("/{generation_id}/extract-emotion")
+async def extract_emotion(
+    generation_id: UUID,
+    emotion_data: EmotionExtract,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    情绪提取 - 分析日记内容，返回结构化情绪标签
+
+    返回JSON格式：
+    - primary_emotion: 主要情绪
+    - intensity: 情绪强度(1-10)
+    - secondary_emotion: 次要情绪
+    - bgm_vibe: 推荐BGM风格
+    - color_palette: 推荐色调
+    - weather_mood: 天气氛围
+    """
+    stmt = select(Generation).where(Generation.id == generation_id)
+    result = await db.execute(stmt)
+    generation = result.scalar_one_or_none()
+
+    if not generation:
+        raise HTTPException(status_code=404, detail="Generation not found")
+
+    emotion_result = await llm_service.extract_emotion(
+        diary_text=emotion_data.diary_text
+    )
+
+    return emotion_result
+
+
+# ========== 新增：漫画分镜生成 ==========
+
+@router.post("/{generation_id}/generate-comic-prompt", response_model=ComicPromptResponse)
+async def generate_comic_prompt(
+    generation_id: UUID,
+    comic_data: ComicPromptGenerate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    漫画分镜提示词生成
+
+    - comic_shuangwen: 高光爽文（热血少年漫/戏剧性冲突）
+    - comic_zhiyu: 治愈温馨（吉卜力/松弛感）
+    """
+    stmt = select(Generation).where(Generation.id == generation_id)
+    result = await db.execute(stmt)
+    generation = result.scalar_one_or_none()
+
+    if not generation:
+        raise HTTPException(status_code=404, detail="Generation not found")
+
+    style = style_manager.get_style(comic_data.style_key)
+    if not style or not style.get("comic_prompt_key"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid comic style: {comic_data.style_key}"
+        )
+
+    # 生成漫画分镜提示词
+    comic_prompt = await llm_service.generate_comic_prompt(
+        diary_text=comic_data.diary_text,
+        style_key=comic_data.style_key
+    )
+
+    # 更新generation的final_prompt
+    generation.final_prompt = comic_prompt
+    await db.commit()
+
+    return ComicPromptResponse(
+        diary_text=comic_data.diary_text,
+        comic_prompt=comic_prompt,
+        style_key=comic_data.style_key,
+        style_name=style["name"]
     )

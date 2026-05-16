@@ -2,12 +2,7 @@ styles:
   watercolor:
     name: "水彩手绘"
     description: "柔和的水彩风格，温暖治愈"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述（地点、环境、氛围）
-      2. 情绪感受（温暖、快乐、平静等）
-      3. 关键物品（食物、装饰品、自然元素等）
-      用温暖治愈的语调描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       基于以下内容生成一段温馨的日记文案：
 
@@ -27,12 +22,7 @@ styles:
   manga_jp:
     name: "日式漫画"
     description: "经典日漫风格，线条清晰"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述（地点、环境）
-      2. 人物表情和动作
-      3. 关键物品
-      用日式漫画的视角描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       将以下内容改编成日式漫画风格的旁白：
 
@@ -52,12 +42,7 @@ styles:
   american_retro:
     name: "美式复古"
     description: "美式复古海报风格，怀旧感"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述
-      2. 复古元素
-      3. 关键物品
-      用美式复古的视角描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       将以下内容改编成美式复古风格：
 
@@ -77,12 +62,7 @@ styles:
   cyberpunk:
     name: "赛博朋克"
     description: "未来科技感，霓虹灯光"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述
-      2. 科技元素
-      3. 关键物品
-      用赛博朋克的视角描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       将以下内容改编成赛博朋克风格：
 
@@ -102,12 +82,7 @@ styles:
   picture_book:
     name: "绘本风"
     description: "可爱绘本风格，适合亲子"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述
-      2. 温馨元素
-      3. 关键物品
-      用绘本的视角描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       将以下内容改编成绘本风格：
 
@@ -127,12 +102,7 @@ styles:
   ink_wash:
     name: "水墨风"
     description: "中国水墨画风格，意境深远"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述
-      2. 意境元素
-      3. 关键物品
-      用水墨画的视角描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       将以下内容改编成水墨风格：
 
@@ -152,12 +122,7 @@ styles:
   pixel_art:
     name: "像素风"
     description: "复古游戏像素风格"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述
-      2. 游戏元素
-      3. 关键物品
-      用像素游戏的视角描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       将以下内容改编成像素风格：
 
@@ -177,12 +142,7 @@ styles:
   oil_painting:
     name: "油画风"
     description: "经典油画风格，艺术感"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述
-      2. 光影元素
-      3. 关键物品
-      用油画的视角描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       将以下内容改编成油画风格：
 
@@ -202,12 +162,7 @@ styles:
   line_drawing:
     name: "线稿风"
     description: "简约线稿风格，清新感"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述
-      2. 线条元素
-      3. 关键物品
-      用线稿的视角描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       将以下内容改编成线稿风格：
 
@@ -227,12 +182,7 @@ styles:
   cartoon:
     name: "卡通风"
     description: "可爱卡通风格，活泼感"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述
-      2. 卡通元素
-      3. 关键物品
-      用卡通的视角描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       将以下内容改编成卡通风格：
 
@@ -252,12 +202,7 @@ styles:
   realistic:
     name: "写实风"
     description: "写实摄影风格，真实感"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述
-      2. 真实细节
-      3. 关键物品
-      用写实的视角描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       将以下内容改编成写实风格：
 
@@ -277,12 +222,7 @@ styles:
   fantasy:
     name: "奇幻风"
     description: "魔法奇幻风格，想象力"
-    vlm_prompt: |
-      请分析这张照片，提取以下信息：
-      1. 场景描述
-      2. 奇幻元素
-      3. 关键物品
-      用奇幻的视角描述，输出JSON格式。
+    vlm_prompt_key: "diary_ghostwriter"
     llm_prompt: |
       将以下内容改编成奇幻风格：
 
@@ -298,3 +238,28 @@ styles:
       输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
     img_prompt: "奇幻风格，{scene_description}，魔法光芒，奇幻色彩，梦幻感"
     bubble_style: "魔法气泡，发光边框"
+
+  # === 漫画分镜风格 ===
+  comic_shuangwen:
+    name: "高光爽文"
+    description: "热血少年漫风格，高能时刻，戏剧性冲突"
+    vlm_prompt_key: "diary_ghostwriter"
+    comic_prompt_key: "comic_shuangwen"
+    img_prompt: "单张多格漫画排版，分镜构图，热血少年漫风格，{scene_description}，粗犷有力的线条，高对比度，戏剧性光影，极具张力的透视，高饱和色彩，8k分辨率，杰作"
+    bubble_style: "热血漫画气泡，粗线条边框"
+
+  comic_zhiyu:
+    name: "治愈温馨"
+    description: "吉卜力动画风格，微小美好，松弛感"
+    vlm_prompt_key: "diary_ghostwriter"
+    comic_prompt_key: "comic_zhiyu"
+    img_prompt: "日常切片多格漫画，网格排版，吉卜力动画风格，{scene_description}，柔和水彩，马卡龙色系，温馨舒适的氛围，柔和的自然光，可爱治愈，杰作"
+    bubble_style: "手写体气泡，柔和边框"
+
+  comic_timeline:
+    name: "一天记录"
+    description: "时间线排版漫画，记录一天的完整故事，按时间顺序展示"
+    vlm_prompt_key: "diary_ghostwriter"
+    comic_prompt_key: "comic_timeline"
+    img_prompt: "一天记录漫画，时间线排版，多格连环画，{scene_description}，温馨插画风格，细腻的线条，柔和的色彩，生活化场景，有故事感，8k分辨率，杰作"
+    bubble_style: "时间标注气泡，简约边框"
