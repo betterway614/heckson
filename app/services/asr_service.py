@@ -1,19 +1,13 @@
 from pathlib import Path
 
+from dashscope.audio.asr import Recognition
+import dashscope
+
 from app.config import get_settings
 from app.utils.file_utils import get_output_path
 
 settings = get_settings()
-
-# 尝试导入真实SDK，如果不可用则使用mock
-try:
-    from dashscope.audio.asr import Recognition
-    import dashscope
-    dashscope.api_key = settings.dashscope_api_key
-    USE_MOCK = False
-except ImportError:
-    from app.services.mock_sdk import MockRecognition as Recognition
-    USE_MOCK = True
+dashscope.api_key = settings.dashscope_api_key
 
 
 class ASRService:

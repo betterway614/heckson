@@ -88,3 +88,21 @@ class ComicPromptResponse(BaseModel):
     comic_prompt: str
     style_key: str
     style_name: str
+
+
+class TextPolishRequest(BaseModel):
+    """独立文本润色请求（不依赖generation）"""
+    text: str
+    style_key: str = "polished"  # polished/moments/xiaohongshu
+
+
+class TextPolishResponse(BaseModel):
+    """独立文本润色响应"""
+    original_text: str
+    polished_text: str
+    style_key: str
+
+
+class DailyDiaryCreate(BaseModel):
+    """一日漫画生成请求"""
+    memory_date: str  # YYYY-MM-DD 格式

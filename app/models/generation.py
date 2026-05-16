@@ -23,12 +23,20 @@ class Generation(Base):
     completed_at = Column(DateTime)
 
     # 两阶段工作流字段
-    stage = Column(String(32), default="vlm_parse")  # vlm_parse/confirmed/img_gen
+    stage = Column(String(32), default="vlm_parse")  # vlm_parse/confirmed/img_gen/script_gen/video_gen
     vlm_raw_metadata = Column(JSONB)                  # VLM原始解析结果
     user_edited_prompt = Column(Text)                  # 用户编辑后的提示词
     llm_polished_prompt = Column(Text)                 # LLM润色后的提示词
     final_prompt = Column(Text)                        # 最终确认的提示词
     prompt_confirmed = Column(Boolean, default=False)  # 用户是否确认
+
+    # 视频生成相关字段
+    video_params = Column(JSONB)           # 视频参数（分辨率、时长、风格、时间范围）
+    video_script = Column(Text)            # LLM 生成的视频脚本
+    video_url = Column(String(512))        # 生成的视频文件路径
+    video_resolution = Column(String(32))  # 视频分辨率（如 "1280x720"）
+    video_duration = Column(Integer)       # 视频时长（秒）
+    video_style = Column(String(32))       # 视频风格
 
     user = relationship("User", back_populates="generations")
     outputs = relationship("Output", back_populates="generation")

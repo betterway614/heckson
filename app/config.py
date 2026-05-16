@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     llm_analysis_model: Optional[str] = None      # 内容分析
     llm_summary_model: Optional[str] = None       # 摘要生成
 
+    # 视频生成配置
+    video_model: str = "wan2.7"
+    video_default_resolution: str = "1280x720"
+    video_default_duration: int = 15
+    video_default_style: str = "cinematic"
+
     # 文件存储
     upload_dir: str = "./uploads"
     output_dir: str = "./outputs"

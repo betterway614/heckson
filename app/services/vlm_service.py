@@ -3,19 +3,13 @@ import base64
 from typing import Any, Optional
 from http import HTTPStatus
 
+from dashscope import MultiModalConversation
+import dashscope
+
 from app.config import get_settings
 
 settings = get_settings()
-
-# 尝试导入真实SDK，如果不可用则使用mock
-try:
-    from dashscope import MultiModalConversation
-    import dashscope
-    dashscope.api_key = settings.dashscope_api_key
-    USE_MOCK = False
-except ImportError:
-    from app.services.mock_sdk import MockMultiModalConversation as MultiModalConversation
-    USE_MOCK = True
+dashscope.api_key = settings.dashscope_api_key
 
 
 class VLMService:

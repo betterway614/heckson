@@ -46,6 +46,7 @@ async def save_upload_file(file: UploadFile, sub_dir: str = "images") -> tuple[s
 
     Returns:
         tuple: (file_path, original_filename, taken_at)
+        file_path 返回 URL 友好的相对路径，如 images/uuid.jpg
     """
     # 创建目录
     upload_dir = Path(settings.upload_dir) / sub_dir
@@ -64,14 +65,51 @@ async def save_upload_file(file: UploadFile, sub_dir: str = "images") -> tuple[s
     # 提取 EXIF 拍摄时间
     taken_at = extract_exif_taken_at(str(file_path))
 
-    return str(file_path), file.filename, taken_at
+    # 返回 URL 友好的相对路径（不包含 upload_dir 前缀）
+    relative_path = f"{sub_dir}/{unique_filename}"
+    return relative_path, file.filename, taken_at
 
 
 def get_output_path(generation_id: str, filename: str) -> str:
-    """获取输出文件路径"""
+    """获取输出文件路径，返回 URL 友好的相对路径"""
+    output_dir = Path(settings.output_dir) / generation_id
+    output_dir.mkdir(parents=True, exist_ok=True)
+    # 返回相对路径，用于数据库存储和 URL 构造
+    return f"{generation_id}/{filename}"
+
+
+def get_output_filesystem_path(generation_id: str, filename: str) -> str:
+    """获取输出文件的完整文件系统路径，用于实际文件写入"""
     output_dir = Path(settings.output_dir) / generation_id
     output_dir.mkdir(parents=True, exist_ok=True)
     return str(output_dir / filename)
+
+
+def normalize_file_path(file_path: str, base_dir: str) -> str:
+    """将文件路径规范化为 URL 友好的相对路径"""
+    # 统一使用正斜杠
+    normalized = file_path.replace("\\", "/")
+
+    # 获取 base_dir 的绝对路径形式用于匹配
+    base_abs = str(Path(base_dir).resolve()).replace("\\", "/")
+
+    # 情况1：绝对路径 - 去掉 base_dir 前缀
+    if normalized.startswith(base_abs):
+        relative = normalized[len(base_abs):].lstrip("/")
+        return relative
+
+    # 情况2：相对路径带前缀（如 ./uploads/images/xxx.png）
+    base_with_dot = f"./{base_dir}/".replace("\\", "/")
+    if normalized.startswith(base_with_dot):
+        return normalized[len(base_with_dot):]
+
+    # 情况3：直接以 base_dir 开头
+    base_prefix = f"{base_dir}/".replace("\\", "/")
+    if normalized.startswith(base_prefix):
+        return normalized[len(base_prefix):]
+
+    # 已经是相对路径，直接返回
+    return normalized
 
 
 def delete_file(file_path: str) -> bool:

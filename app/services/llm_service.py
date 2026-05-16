@@ -2,20 +2,14 @@ import json
 from typing import Any, Optional
 from http import HTTPStatus
 
+from dashscope import AioGeneration
+import dashscope
+
 from app.config import get_settings
 from app.models.model_registry import get_model_registry, ModelTask
 
 settings = get_settings()
-
-# 尝试导入真实SDK，如果不可用则使用mock
-try:
-    from dashscope import AioGeneration
-    import dashscope
-    dashscope.api_key = settings.dashscope_api_key
-    USE_MOCK = False
-except ImportError:
-    from app.services.mock_sdk import MockAioGeneration as AioGeneration
-    USE_MOCK = True
+dashscope.api_key = settings.dashscope_api_key
 
 
 class LLMService:
@@ -284,6 +278,47 @@ class LLMService:
 
         return response.output.choices[0].message.content
 
+    async def polish_text(
+        self,
+        text: str,
+        style_key: str,
+        model: Optional[str] = None
+    ) -> str:
+        """
+        独立文本润色（不依赖generation）
+
+        Args:
+            text: 原始文本
+            style_key: 润色风格键名
+            model: 可选的模型覆盖
+
+        Returns:
+            str: 润色后的文本
+        """
+        from app.templates.styles import StyleManager
+
+        system_prompt = StyleManager.get_polish_prompt(style_key)
+        if not system_prompt:
+            raise ValueError(f"Unknown polish style: {style_key}")
+
+        model_name = self._get_model(ModelTask.PROMPT_POLISH, model)
+
+        response = await AioGeneration.call(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text}
+            ],
+            temperature=0.8,
+            max_tokens=1024,
+            result_format='message'
+        )
+
+        if response.status_code != HTTPStatus.OK:
+            raise Exception(f"LLM调用失败: {response.code} - {response.message}")
+
+        return response.output.choices[0].message.content
+
     async def polish_diary(
         self,
         diary_text: str,
@@ -396,6 +431,178 @@ class LLMService:
             model=model_name,
             messages=[
                 {"role": "system", "content": "你是一个顶级的AI生图提示词专家，严格按要求输出中文提示词组合。"},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.8,
+            max_tokens=1024,
+            result_format='message'
+        )
+
+        if response.status_code != HTTPStatus.OK:
+            raise Exception(f"LLM调用失败: {response.code} - {response.message}")
+
+        return response.output.choices[0].message.content
+
+    async def generate_daily_diary_prompt(
+        self,
+        memory_date: str,
+        all_memories: list[dict],
+        model: Optional[str] = None
+    ) -> str:
+        """
+        一日漫画汇总 - 将当天所有记忆按时间顺序汇总为漫画提示词
+
+        Args:
+            memory_date: 日期字符串 (如 "2026年05月17日")
+            all_memories: 当天所有记忆列表，每项包含:
+                - time: 时间字符串
+                - text: 用户文字
+                - visual_info: VLM视觉提取结果
+            model: 可选的模型覆盖
+
+        Returns:
+            str: 漫画生图提示词
+        """
+        from app.templates.styles import StyleManager
+
+        # 将所有记忆整理为可读文本
+        memory_parts = []
+        for i, mem in enumerate(all_memories, 1):
+            time_str = mem.get("time", "未知时间")
+            text = mem.get("text", "")
+            visual = mem.get("visual_info", "")
+
+            part = f"【记忆{i} - {time_str}】"
+            if text:
+                part += f"\n  文字记录：{text}"
+            if visual:
+                part += f"\n  画面描述：{visual}"
+            memory_parts.append(part)
+
+        all_memories_str = "\n\n".join(memory_parts)
+
+        # 获取提示词
+        prompt = StyleManager.get_daily_diary_prompt(memory_date, all_memories_str)
+
+        model_name = self._get_model(ModelTask.SCRIPT_GENERATION, model)
+
+        response = await AioGeneration.call(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "你是一个顶级的漫画分镜导演和AI生图提示词专家，严格按要求输出中文提示词组合。"},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.8,
+            max_tokens=1024,
+            result_format='message'
+        )
+
+        if response.status_code != HTTPStatus.OK:
+            raise Exception(f"LLM调用失败: {response.code} - {response.message}")
+
+        return response.output.choices[0].message.content
+
+    async def polish_diary_with_visual(
+        self,
+        user_text: str,
+        visual_text: str,
+        model: Optional[str] = None
+    ) -> str:
+        """
+        结合图片内容和用户文字润色日记
+
+        Args:
+            user_text: 用户输入的文字
+            visual_text: VLM解析的视觉描述
+            model: 可选的模型覆盖
+
+        Returns:
+            str: 润色后的日记文本
+        """
+        model_name = self._get_model(ModelTask.PROMPT_POLISH, model)
+
+        system_prompt = """你是一个情感细腻的日记创作助手。
+用户会提供两部分内容：
+1. 用户文字：用户自己记录的文字内容
+2. 画面描述：AI从用户上传的图片中提取的视觉信息
+
+请将这两部分内容融合，创作一段自然流畅的第一人称日记。
+
+要求：
+1. 以用户文字为核心，画面描述为补充
+2. 保持用户原始的情感和意图
+3. 适当增加细节，使日记更生动
+4. 语言自然、有温度，像在写给自己看的日记
+5. 不要添加emoji或特殊符号
+6. 直接输出日记正文，不要添加标题或说明"""
+
+        prompt = f"""用户文字：
+{user_text if user_text else "（用户未输入文字）"}
+
+画面描述：
+{visual_text if visual_text else "（无图片或图片解析失败）"}"""
+
+        response = await AioGeneration.call(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.8,
+            max_tokens=512,
+            result_format='message'
+        )
+
+        if response.status_code != HTTPStatus.OK:
+            raise Exception(f"LLM调用失败: {response.code} - {response.message}")
+
+        return response.output.choices[0].message.content
+
+    async def generate_video_script(
+        self,
+        memories: list,
+        style: str = "cinematic"
+    ) -> str:
+        """
+        根据记忆生成视频脚本
+
+        Args:
+            memories: 记忆列表（已按日期排序）
+            style: 视频风格
+
+        Returns:
+            str: 视频脚本
+        """
+        # 构建记忆文本
+        memory_texts = []
+        for i, memory in enumerate(memories, 1):
+            date_str = memory.memory_date.strftime("%Y年%m月%d日")
+            text = memory.content_text or "图片记忆"
+            memory_texts.append(f"{i}. [{date_str}] {text}")
+
+        memories_str = "\n".join(memory_texts)
+
+        prompt = f"""你是一位专业的视频脚本编剧。请根据以下记忆内容，创作一个 15 秒的视频脚本。
+
+记忆内容（按时间顺序）：
+{memories_str}
+
+视频风格：{style}
+
+要求：
+1. 脚本应以时间顺序串联这些记忆
+2. 语言生动、有画面感
+3. 适合 15 秒视频的节奏
+4. 包含场景描述和旁白文字
+
+请直接输出脚本内容，不要包含其他说明。"""
+
+        model_name = self._get_model(ModelTask.SCRIPT_GENERATION)
+
+        response = await AioGeneration.call(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "你是一个专业的视频脚本编剧，擅长创作富有感染力的短视频脚本。"},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.8,

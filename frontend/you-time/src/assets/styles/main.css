@@ -1,0 +1,85 @@
+:root {
+  --primary-color: #5C3E32;
+  --secondary-color: #8B6914;
+  --background-color: #FDF8F3;
+  --card-bg: #FFFFFF;
+  --text-color: #3A3A3A;
+  --light-text: #999999;
+  --border-color: #EFE9E2;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f5f6f8; /* 桌面端的外层背景色 */
+  color: var(--text-color);
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 480px; /* 限制最大宽度，适配移动端在PC上的展示 */
+  margin: 0 auto;
+  background-color: var(--background-color);
+  min-height: 100vh;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.page-container {
+  min-height: 100vh;
+  padding-bottom: 80px; /* space for tab bar */
+  background-color: var(--background-color);
+}
+
+/* 底部导航 */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  z-index: 100;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  max-width: 480px; /* 同步限制宽度 */
+  margin: 0 auto;
+}
+
+/* 图片画廊 */
+.image-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px;
+}
+
+.gallery-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 卡片样式 */
+.card {
+  background: var(--card-bg);
+  border-radius: 24px;
+  margin: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.card-body {
+  padding: 20px;
+}

@@ -1,0 +1,35 @@
+{
+  "generation": {
+    "id": "521cc252-3a31-4c75-af7c-eba68af548d7",
+    "style_key": "watercolor",
+    "status": "pending_confirmation",
+    "diary_length": 110
+  },
+  "prompt_confirm": {
+    "final_prompt": "达美乐披萨堆成小山，玉米青豆火腿丁在嘴里爆汁，我边啃边看同事手腕上那块白表带智能手表——滴答，正好敲在饱胀的胃壁上。四只手刚举完冰咖啡杯，封口膜还没撕干净，纸巾盒就空了。LE两个字母在杯身反光里一闪，像句没说完的祝酒词。",
+    "final_prompt_length": 110,
+    "status": "processing"
+  },
+  "img_prompt": "水彩手绘风格，达美乐披萨堆成小山，玉米青豆火腿丁在嘴里爆汁，我边啃边看同事手腕上那块白表带智能手表——滴答，正好敲在饱胀的胃壁上。四只手刚举完冰咖啡杯，封口膜还没撕干净，纸巾盒就空了。LE两个字母在杯身反光里一闪，像句没说完的祝酒词。，温暖色调，治愈系，细腻笔触，柔和光影",
+  "workflow": {
+    "status": "done",
+    "time_seconds": 33.5,
+    "result": {
+      "output_path": "outputs\\521cc252-3a31-4c75-af7c-eba68af548d7\\comic.png"
+    }
+  },
+  "outputs": [
+    {
+      "id": "57a7daf3-a1c2-46ea-bc78-30a3629e1669",
+      "file_path": "outputs\\521cc252-3a31-4c75-af7c-eba68af548d7\\comic.png",
+      "file_type": "image",
+      "file_exists": true,
+      "file_size": 1302351,
+      "metadata": null
+    }
+  ],
+  "final_state": {
+    "status": "done",
+    "completed_at": "2026-05-16 12:20:28.679455"
+  }
+}

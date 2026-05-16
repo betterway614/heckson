@@ -1,0 +1,84 @@
+{
+  "memory": {
+    "id": "1fba82a9-efac-4578-966c-c315259e2804",
+    "content_text": "比赛的提供方的达美乐，吃的好饱。",
+    "memory_date": "2026-05-16",
+    "mood_tag": "happy"
+  },
+  "media": [
+    {
+      "id": "37522d32-d7c4-4787-ad06-f183593d9116",
+      "file": "微信图片_20260516154300_153_2786.jpg",
+      "taken_at": "None",
+      "sort_order": 0
+    },
+    {
+      "id": "5ea0a8df-7783-48c7-8f46-e7caad75cf5d",
+      "file": "微信图片_20260516165752_154_2786.jpg",
+      "taken_at": "None",
+      "sort_order": 1
+    }
+  ],
+  "generation": {
+    "id": "521cc252-3a31-4c75-af7c-eba68af548d7",
+    "style_key": "watercolor",
+    "status": "processing"
+  },
+  "workflow": {
+    "status": "pending_confirmation",
+    "time_seconds": 10.3,
+    "vlm_raw_metadata": [
+      {
+        "scene": "办公室聚会",
+        "people": "4人，部分可见手部和上半身",
+        "details": [
+          "四只手共同举着装有冰咖啡的杯子",
+          "杯子为透明塑料材质，配有吸管和封口膜",
+          "其中一人佩戴白色表带的智能手表",
+          "背景中有电脑、键盘等办公设备",
+          "部分人员佩戴挂绳工牌"
+        ],
+        "objects": [
+          "冰咖啡杯",
+          "笔记本电脑",
+          "键盘",
+          "智能手表",
+          "纸巾盒",
+          "数据线"
+        ],
+        "environment": "室内办公环境，光线明亮，氛围轻松",
+        "text_in_image": "LE"
+      },
+      {
+        "scene": "室内聚餐",
+        "people": "多人，均佩戴一次性手套",
+        "details": [
+          "披萨上有玉米、青豆、火腿等配料",
+          "部分披萨已被切开并取出",
+          "一人手腕上佩戴白色表带的智能手表",
+          "背景中可见一人穿着黑色上衣并佩戴紫色挂绳",
+          "披萨盒为常见的纸质外卖盒"
+        ],
+        "objects": [
+          "披萨",
+          "披萨盒",
+          "一次性手套",
+          "智能手表",
+          "紫色挂绳"
+        ],
+        "environment": "室内环境，光线明亮，氛围轻松",
+        "text_in_image": ""
+      }
+    ],
+    "diary": "达美乐披萨堆成小山，玉米青豆火腿丁在嘴里爆汁，我边啃边看同事手腕上那块白表带智能手表——滴答，正好敲在饱胀的胃壁上。四只手刚举完冰咖啡杯，封口膜还没撕干净，纸巾盒就空了。LE两个字母在杯身反光里一闪，像句没说完的祝酒词。",
+    "diary_length": 110
+  },
+  "verification": {
+    "memory_exists": true,
+    "media_count": 2,
+    "media_expected": 2,
+    "generation_status": "pending_confirmation",
+    "vlm_metadata_exists": true,
+    "diary_exists": true
+  }
+}

@@ -2,20 +2,14 @@ import os
 from pathlib import Path
 from http import HTTPStatus
 
+from dashscope import ImageSynthesis
+import dashscope
+
 from app.config import get_settings
-from app.utils.file_utils import get_output_path
+from app.utils.file_utils import get_output_path, get_output_filesystem_path
 
 settings = get_settings()
-
-# 尝试导入真实SDK，如果不可用则使用mock
-try:
-    from dashscope import ImageSynthesis
-    import dashscope
-    dashscope.api_key = settings.dashscope_api_key
-    USE_MOCK = False
-except ImportError:
-    from app.services.mock_sdk import MockImageSynthesis as ImageSynthesis
-    USE_MOCK = True
+dashscope.api_key = settings.dashscope_api_key
 
 
 class ImageService:
@@ -41,8 +35,11 @@ class ImageService:
         Returns:
             str: 生成的图片文件路径
         """
-        # 调用图像生成
-        response = ImageSynthesis.call(
+        import asyncio
+
+        # 调用图像生成（使用同步调用，在线程池中执行避免阻塞）
+        response = await asyncio.to_thread(
+            ImageSynthesis.call,
             model=self.model,
             prompt=prompt,
             n=1,
@@ -55,15 +52,19 @@ class ImageService:
         # 获取图片URL并下载
         image_url = response.output.results[0].url
 
-        # 保存图片
-        output_path = get_output_path(generation_id, "comic.png")
-        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        # 保存图片 - 使用文件系统路径写入，返回相对路径用于数据库存储
+        fs_path = get_output_filesystem_path(generation_id, "comic.png")
+        Path(fs_path).parent.mkdir(parents=True, exist_ok=True)
 
-        # 下载图片
-        import urllib.request
-        urllib.request.urlretrieve(image_url, output_path)
+        # 下载图片（使用线程池避免阻塞）
+        await asyncio.to_thread(
+            __import__('urllib.request', fromlist=['urlretrieve']).urlretrieve,
+            image_url,
+            fs_path
+        )
 
-        return output_path
+        # 返回 URL 友好的相对路径
+        return get_output_path(generation_id, "comic.png")
 
 
 # 单例
