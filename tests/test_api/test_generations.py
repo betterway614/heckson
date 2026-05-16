@@ -1,4 +1,8 @@
 import pytest
+from datetime import datetime
+
+from app.models.generation import Generation
+
 
 
 @pytest.mark.asyncio
@@ -182,3 +186,34 @@ async def test_get_nonexistent_generation(client):
     fake_id = "00000000-0000-0000-0000-000000000000"
     response = await client.get(f"/api/generations/{fake_id}")
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_list_generations_filters_by_date(client, db_session):
+    """测试按创建日期筛选生成任务列表"""
+    generation = Generation(
+        user_id="00000000-0000-0000-0000-000000000001",
+        memory_ids=["00000000-0000-0000-0000-000000000002"],
+        type="diary",
+        style_key="watercolor",
+        status="done",
+        progress=100,
+        created_at=datetime(2026, 5, 16, 9, 0, 0)
+    )
+    other_generation = Generation(
+        user_id="00000000-0000-0000-0000-000000000001",
+        memory_ids=["00000000-0000-0000-0000-000000000003"],
+        type="diary",
+        style_key="manga_jp",
+        status="done",
+        progress=100,
+        created_at=datetime(2026, 5, 15, 9, 0, 0)
+    )
+    db_session.add_all([generation, other_generation])
+    await db_session.commit()
+
+    response = await client.get("/api/generations/?date=2026-05-16")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["style_key"] == "watercolor"

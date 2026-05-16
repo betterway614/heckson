@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "postgresql+asyncpg://betterway:9a301301@localhost:5432/you_time"
+    database_url: str = "sqlite+aiosqlite:///./you_time.db"
 
     # Redis
     redis_url: str = "redis://localhost:6379/0"
