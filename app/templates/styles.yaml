@@ -1,0 +1,300 @@
+styles:
+  watercolor:
+    name: "水彩手绘"
+    description: "柔和的水彩风格，温暖治愈"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述（地点、环境、氛围）
+      2. 情绪感受（温暖、快乐、平静等）
+      3. 关键物品（食物、装饰品、自然元素等）
+      用温暖治愈的语调描述，输出JSON格式。
+    llm_prompt: |
+      基于以下内容生成一段温馨的日记文案：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：水彩手绘，温暖治愈
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），简短有趣
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "水彩手绘风格，{scene_description}，温暖色调，治愈系，细腻笔触，柔和光影"
+    bubble_style: "圆润可爱，白色背景，粉色边框"
+
+  manga_jp:
+    name: "日式漫画"
+    description: "经典日漫风格，线条清晰"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述（地点、环境）
+      2. 人物表情和动作
+      3. 关键物品
+      用日式漫画的视角描述，输出JSON格式。
+    llm_prompt: |
+      将以下内容改编成日式漫画风格的旁白：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：日式漫画，清晰线条
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），有漫画感
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "日式漫画风格，{scene_description}，清晰线条，动漫风，高对比度"
+    bubble_style: "日式对话框，尖角气泡"
+
+  american_retro:
+    name: "美式复古"
+    description: "美式复古海报风格，怀旧感"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述
+      2. 复古元素
+      3. 关键物品
+      用美式复古的视角描述，输出JSON格式。
+    llm_prompt: |
+      将以下内容改编成美式复古风格：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：美式复古海报
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），复古感
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "美式复古海报风格，{scene_description}，怀旧色调，做旧效果"
+    bubble_style: "复古漫画框，粗边框"
+
+  cyberpunk:
+    name: "赛博朋克"
+    description: "未来科技感，霓虹灯光"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述
+      2. 科技元素
+      3. 关键物品
+      用赛博朋克的视角描述，输出JSON格式。
+    llm_prompt: |
+      将以下内容改编成赛博朋克风格：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：赛博朋克，未来科技感
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），科技感
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "赛博朋克风格，{scene_description}，霓虹灯光，未来科技感，暗色调"
+    bubble_style: "科技感对话框，发光边框"
+
+  picture_book:
+    name: "绘本风"
+    description: "可爱绘本风格，适合亲子"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述
+      2. 温馨元素
+      3. 关键物品
+      用绘本的视角描述，输出JSON格式。
+    llm_prompt: |
+      将以下内容改编成绘本风格：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：可爱绘本
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），温馨可爱
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "绘本风格，{scene_description}，可爱温馨，柔和色彩，简单线条"
+    bubble_style: "可爱气泡，圆润边框"
+
+  ink_wash:
+    name: "水墨风"
+    description: "中国水墨画风格，意境深远"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述
+      2. 意境元素
+      3. 关键物品
+      用水墨画的视角描述，输出JSON格式。
+    llm_prompt: |
+      将以下内容改编成水墨风格：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：中国水墨画
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），诗意
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "水墨画风格，{scene_description}，黑白灰色调，留白意境，传统笔触"
+    bubble_style: "书法框，传统边框"
+
+  pixel_art:
+    name: "像素风"
+    description: "复古游戏像素风格"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述
+      2. 游戏元素
+      3. 关键物品
+      用像素游戏的视角描述，输出JSON格式。
+    llm_prompt: |
+      将以下内容改编成像素风格：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：像素游戏
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），游戏感
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "像素艺术风格，{scene_description}，8-bit像素，复古游戏感"
+    bubble_style: "像素对话框，方块边框"
+
+  oil_painting:
+    name: "油画风"
+    description: "经典油画风格，艺术感"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述
+      2. 光影元素
+      3. 关键物品
+      用油画的视角描述，输出JSON格式。
+    llm_prompt: |
+      将以下内容改编成油画风格：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：经典油画
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），艺术感
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "油画风格，{scene_description}，厚重笔触，丰富色彩，光影效果"
+    bubble_style: "古典画框，金色边框"
+
+  line_drawing:
+    name: "线稿风"
+    description: "简约线稿风格，清新感"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述
+      2. 线条元素
+      3. 关键物品
+      用线稿的视角描述，输出JSON格式。
+    llm_prompt: |
+      将以下内容改编成线稿风格：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：简约线稿
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），清新
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "线稿风格，{scene_description}，黑白线条，简约清新，留白"
+    bubble_style: "简约气泡，细线边框"
+
+  cartoon:
+    name: "卡通风"
+    description: "可爱卡通风格，活泼感"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述
+      2. 卡通元素
+      3. 关键物品
+      用卡通的视角描述，输出JSON格式。
+    llm_prompt: |
+      将以下内容改编成卡通风格：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：可爱卡通
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），活泼有趣
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "卡通风格，{scene_description}，鲜艳色彩，可爱造型，活泼感"
+    bubble_style: "卡通气泡，彩色边框"
+
+  realistic:
+    name: "写实风"
+    description: "写实摄影风格，真实感"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述
+      2. 真实细节
+      3. 关键物品
+      用写实的视角描述，输出JSON格式。
+    llm_prompt: |
+      将以下内容改编成写实风格：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：写实摄影
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），真实感
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "写实风格，{scene_description}，高清细节，真实光影，自然色彩"
+    bubble_style: "现代对话框，简洁边框"
+
+  fantasy:
+    name: "奇幻风"
+    description: "魔法奇幻风格，想象力"
+    vlm_prompt: |
+      请分析这张照片，提取以下信息：
+      1. 场景描述
+      2. 奇幻元素
+      3. 关键物品
+      用奇幻的视角描述，输出JSON格式。
+    llm_prompt: |
+      将以下内容改编成奇幻风格：
+
+      场景信息：{metadata}
+      用户情绪：{user_mood}
+      记忆日期：{memory_date}
+
+      要求：
+      1. 风格：魔法奇幻
+      2. 生成一个简短的标题（caption）
+      3. 生成画面描述（scene_description），用于AI绘图
+      4. 生成对话气泡文字（bubble_text），奇幻感
+      输出JSON格式：{{"caption": "...", "scene_description": "...", "bubble_text": "..."}}
+    img_prompt: "奇幻风格，{scene_description}，魔法光芒，奇幻色彩，梦幻感"
+    bubble_style: "魔法气泡，发光边框"
