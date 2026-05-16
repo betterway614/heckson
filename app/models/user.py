@@ -1,0 +1,23 @@
+from sqlalchemy import Column, String, DateTime
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import uuid
+
+from app.database import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    openid = Column(String(128), unique=True, nullable=False, index=True)
+    unionid = Column(String(128), nullable=True)
+    nickname = Column(String(64))
+    avatar = Column(String(512))
+    phone = Column(String(20))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    memories = relationship("Memory", back_populates="user")
+    generations = relationship("Generation", back_populates="user")
