@@ -13,8 +13,12 @@ from app.services.img_service import image_service
 from app.templates.styles import StyleManager
 
 
-class DiaryWorkflow(BaseWorkflow):
-    """日记生成工作流"""
+class VLMWorkflow(BaseWorkflow):
+    """
+    阶段1：VLM解析工作流
+
+    解析图片，提取元数据，完成后状态变为pending_confirmation
+    """
 
     def __init__(self, db: AsyncSession, generation: Generation):
         super().__init__(db, generation)
@@ -22,22 +26,16 @@ class DiaryWorkflow(BaseWorkflow):
         self.style = self.style_manager.get_style(generation.style_key)
 
     def define_steps(self) -> list[str]:
-        return ["vlm_parse", "llm_script", "img_gen", "compose"]
+        return ["vlm_parse"]
 
     async def execute_step(self, step: str) -> dict[str, Any]:
         if step == "vlm_parse":
             return await self._vlm_parse()
-        elif step == "llm_script":
-            return await self._llm_script()
-        elif step == "img_gen":
-            return await self._img_gen()
-        elif step == "compose":
-            return await self._compose()
         else:
             raise ValueError(f"Unknown step: {step}")
 
     async def _vlm_parse(self) -> dict[str, Any]:
-        """Step 1: VLM解析"""
+        """VLM解析图片"""
         # 获取关联的媒体文件
         memory_ids = self.generation.memory_ids
         stmt = select(Media).where(Media.memory_id.in_(memory_ids))
@@ -61,37 +59,69 @@ class DiaryWorkflow(BaseWorkflow):
 
         for memory in memories:
             memory.metadata_json = all_metadata
+
+        # 更新Generation的vlm_raw_metadata
+        self.generation.vlm_raw_metadata = all_metadata
+
         await self.db.commit()
 
         return {"metadata": all_metadata}
 
-    async def _llm_script(self) -> dict[str, Any]:
-        """Step 2: LLM生成文案"""
-        # 获取第一个Memory的metadata
-        memory_id = self.generation.memory_ids[0]
-        stmt = select(Memory).where(Memory.id == memory_id)
-        result = await self.db.execute(stmt)
-        memory = result.scalar_one()
+    async def run(self) -> dict[str, Any]:
+        """运行VLM解析，完成后设置状态为pending_confirmation"""
+        try:
+            self.generation.status = "processing"
+            self.generation.stage = "vlm_parse"
+            await self.db.commit()
 
-        # 生成文案
-        script = await llm_service.generate_script(
-            metadata=memory.metadata_json,
-            style_prompt=self.style["llm_prompt"],
-            user_mood=memory.mood_tag or "",
-            memory_date=str(memory.memory_date)
-        )
+            result = await self.execute_step("vlm_parse")
 
-        return script
+            # VLM解析完成，等待用户确认
+            self.generation.status = "pending_confirmation"
+            self.generation.progress = 100
+            self.generation.current_step = "vlm_parse"
+            await self.db.commit()
+
+            return result
+
+        except Exception as e:
+            self.generation.status = "failed"
+            self.generation.error_message = str(e)
+            await self.db.commit()
+            raise
+
+
+class ImageGenWorkflow(BaseWorkflow):
+    """
+    阶段2：图片生成工作流
+
+    用户确认提示词后，生成图片
+    """
+
+    def __init__(self, db: AsyncSession, generation: Generation):
+        super().__init__(db, generation)
+        self.style_manager = StyleManager()
+        self.style = self.style_manager.get_style(generation.style_key)
+
+    def define_steps(self) -> list[str]:
+        return ["img_gen", "compose"]
+
+    async def execute_step(self, step: str) -> dict[str, Any]:
+        if step == "img_gen":
+            return await self._img_gen()
+        elif step == "compose":
+            return await self._compose()
+        else:
+            raise ValueError(f"Unknown step: {step}")
 
     async def _img_gen(self) -> dict[str, Any]:
-        """Step 3: 图像生成"""
-        # 获取上一步的脚本
-        script = await self._llm_script()
-        scene_description = script.get("scene_description", "")
+        """图片生成"""
+        # 获取用户确认的提示词
+        final_prompt = self.generation.final_prompt
 
         # 构建图片生成提示词
         img_prompt = self.style["img_prompt"].format(
-            scene_description=scene_description
+            scene_description=final_prompt
         )
 
         # 生成图片
@@ -100,27 +130,52 @@ class DiaryWorkflow(BaseWorkflow):
             generation_id=str(self.generation.id)
         )
 
-        return {"image_path": image_path, "script": script}
+        return {"image_path": image_path}
 
     async def _compose(self) -> dict[str, Any]:
-        """Step 4: 合成输出"""
-        # 获取图片和脚本
+        """合成输出"""
         img_result = await self._img_gen()
         image_path = img_result["image_path"]
-        script = img_result["script"]
 
-        # TODO: 使用Pillow添加文字气泡
-        # 这里简化处理，直接保存为最终输出
+        # 创建输出记录
         output = Output(
             generation_id=self.generation.id,
             file_path=image_path,
             file_type="image",
             metadata={
-                "caption": script.get("caption", ""),
-                "bubble_text": script.get("bubble_text", "")
+                "final_prompt": self.generation.final_prompt,
+                "style_key": self.generation.style_key
             }
         )
         self.db.add(output)
         await self.db.commit()
 
         return {"output_path": image_path}
+
+    async def run(self) -> dict[str, Any]:
+        """运行图片生成工作流"""
+        try:
+            self.generation.status = "processing"
+            self.generation.stage = "img_gen"
+            self.generation.progress = 0
+            await self.db.commit()
+
+            # Step 1: 图片生成
+            await self.update_progress("img_gen", 50)
+            result = await self.execute_step("compose")
+
+            # 完成
+            self.generation.status = "done"
+            self.generation.progress = 100
+            self.generation.current_step = "done"
+            from datetime import datetime
+            self.generation.completed_at = datetime.utcnow()
+            await self.db.commit()
+
+            return result
+
+        except Exception as e:
+            self.generation.status = "failed"
+            self.generation.error_message = str(e)
+            await self.db.commit()
+            raise
