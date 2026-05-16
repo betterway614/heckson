@@ -1,10 +1,19 @@
 import base64
-from volcenginesdkarkruntime import Ark
+import os
+from pathlib import Path
 
 from app.config import get_settings
 from app.utils.file_utils import get_output_path
 
 settings = get_settings()
+
+# 尝试导入真实SDK，如果不可用则使用mock
+try:
+    from volcenginesdkarkruntime import Ark
+    USE_MOCK = False
+except ImportError:
+    from app.services.mock_sdk import MockArkClient as Ark
+    USE_MOCK = True
 
 
 class ImageService:
@@ -42,6 +51,9 @@ class ImageService:
         # 保存图片
         image_data = base64.b64decode(result.data[0].b64_json)
         output_path = get_output_path(generation_id, "comic.png")
+
+        # 确保目录存在
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
         with open(output_path, "wb") as f:
             f.write(image_data)

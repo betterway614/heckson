@@ -1,11 +1,19 @@
 import json
 import base64
+import os
 from typing import Any
-from volcenginesdkarkruntime import Ark
 
 from app.config import get_settings
 
 settings = get_settings()
+
+# 尝试导入真实SDK，如果不可用则使用mock
+try:
+    from volcenginesdkarkruntime import Ark
+    USE_MOCK = False
+except ImportError:
+    from app.services.mock_sdk import MockArkClient as Ark
+    USE_MOCK = True
 
 
 class VLMService:

@@ -14,7 +14,7 @@ class Output(Base):
     generation_id = Column(UUID(as_uuid=True), ForeignKey("generations.id"), nullable=False, index=True)
     file_path = Column(String(512), nullable=False)
     file_type = Column(String(16), nullable=False)  # image/audio/video
-    metadata = Column(JSONB)
+    metadata_json = Column("metadata", JSONB)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     generation = relationship("Generation", back_populates="outputs")
